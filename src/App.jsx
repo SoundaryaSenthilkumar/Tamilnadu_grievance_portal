@@ -1,0 +1,38 @@
+import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import AnnouncementBar from './components/AnnouncementBar';
+import Footer from './components/Footer';
+import Home from './pages/Home';
+import RaiseComplaint from './pages/RaiseComplaint';
+import TrackComplaint from './pages/TrackComplaint';
+import AdminLogin from './pages/AdminLogin';
+
+function StandardLayout() {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <AnnouncementBar />
+      <main className="flex-grow">
+        <Outlet />
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route element={<StandardLayout />}>
+          <Route path="/raise-complaint" element={<RaiseComplaint />} />
+          <Route path="/track-complaint" element={<TrackComplaint />} />
+          <Route path="/admin-login" element={<AdminLogin />} />
+        </Route>
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
