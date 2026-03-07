@@ -12,8 +12,8 @@ function Header() {
     { label: isTamil ? 'முகப்பு' : 'Home', to: '/' },
     { label: isTamil ? 'புகார் பதிவு' : 'Raise Complaint', to: '/raise-complaint' },
     { label: isTamil ? 'புகார் கண்காணிப்பு' : 'Track Complaint', to: '/track-complaint' },
-    { label: isTamil ? 'துறைகள்' : 'Departments', to: '#departments' },
-    { label: isTamil ? 'உதவி' : 'Help', to: '#help' },
+    { label: isTamil ? 'துறைகள்' : 'Departments', to: '/#departments' },
+    { label: isTamil ? 'உதவி' : 'Helpline', to: '/#helpline' },
     { label: isTamil ? 'நிர்வாக உள்நுழைவு' : 'Admin Login', to: '/admin-login' },
   ];
 
@@ -43,7 +43,7 @@ function Header() {
 
           <div className="hidden items-center gap-6 lg:flex">
             {navLinks.map((item) =>
-              item.to.startsWith('#') ? (
+              item.to.includes('#') ? (
                 <a
                   key={item.label}
                   href={item.to}
@@ -83,7 +83,7 @@ function Header() {
         {mobileOpen && (
           <div className="space-y-2 pb-4 lg:hidden">
             {navLinks.map((item) =>
-              item.to.startsWith('#') ? (
+              item.to.includes('#') ? (
                 <a key={item.label} href={item.to} className="block rounded-md px-3 py-2 text-sm hover:bg-white/10">
                   {item.label}
                 </a>

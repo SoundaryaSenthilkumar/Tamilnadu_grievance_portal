@@ -1,8 +1,36 @@
 import { useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
 
+const TEXT = {
+  en: {
+    errorComplete: "Please enter all 10 characters.",
+    trackTitle: "Track Your Complaint",
+    trackDescription: "Enter your grievance ID to view current status.",
+    search: "Search",
+    demoIds: "Demo IDs",
+    pending: "Pending",
+    submitted: "Submitted",
+    underReview: "Under Review",
+    inProgress: "In Progress",
+    closed: "Closed",
+  },
+  ta: {
+    errorComplete: "10 எழுத்துகள் முழுவதும் உள்ளிடவும்.",
+    trackTitle: "உங்கள் புகாரை கண்காணிக்கவும்",
+    trackDescription: "நிலையை பார்க்க உங்கள் புகார் ID-ஐ உள்ளிடவும்.",
+    search: "தேடு",
+    demoIds: "மாதிரி IDகள்",
+    pending: "நிலுவை",
+    submitted: "சமர்ப்பிக்கப்பட்டது",
+    underReview: "ஆய்வில்",
+    inProgress: "நடப்பில்",
+    closed: "மூடப்பட்டது",
+  },
+};
+
 export default function StatusTracker({ onSearch }) {
-  const { t } = useLanguage();
+  const { language } = useLanguage();
+  const t = (key) => (language === "ta" ? TEXT.ta[key] : TEXT.en[key]) || key;
   const [grievanceId, setGrievanceId] = useState("");
   const [error, setError] = useState("");
 
@@ -33,16 +61,7 @@ export default function StatusTracker({ onSearch }) {
 
   return (
     <div className="bg-white shadow-lg rounded-xl border border-[#0f766e] p-4 sm:p-6 mt-10" style={{ marginBottom: '70px' }}>
-      
-      <h2 className="text-xl font-semibold text-slate-800">
-        {t('trackTitle')}
-      </h2>
-
-      <p className="text-sm text-slate-600 mt-1">
-        {t('trackDescription')}
-      </p>
-
-      <form onSubmit={handleSubmit} className="flex gap-3 mt-5">
+      <form onSubmit={handleSubmit} className="flex gap-3">
         
         <div className="flex-1">
           <input

@@ -1,0 +1,12 @@
+[
+  {
+    "token": "ABCDE12345",
+    "name": "Sample Citizen",
+    "department": "Public Works Department",
+    "addressLine1": "12 Example Street",
+    "addressLine2": "Ward 4",
+    "phone": "9876543210",
+    "message": "Example complaint data record.",
+    "submittedAt": "2026-03-05T10:00:00.000Z"
+  }
+]

@@ -15,7 +15,7 @@ function Footer() {
               : 'Official grievance redressal platform for citizens of Tamil Nadu ensuring transparent, time-bound complaint resolution.'}
           </p>
         </div>
-        <div>
+        <div id="helpline">
           <h4 className="text-lg font-bold text-[#F4B400]">{isTamil ? 'தொடர்பு தகவல்' : 'Contact Information'}</h4>
           <ul className="mt-3 space-y-2 text-sm">
             <li>{isTamil ? 'உதவி எண்: 1800-425-1234' : 'Helpline Number: 1800-425-1234'}</li>

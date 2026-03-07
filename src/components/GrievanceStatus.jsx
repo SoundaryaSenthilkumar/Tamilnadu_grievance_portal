@@ -1,7 +1,49 @@
 import { useLanguage } from "../context/LanguageContext";
 
+const TEXT = {
+  en: {
+    pending: "Pending",
+    submitted: "Submitted",
+    underReview: "Under Review",
+    inProgress: "In Progress",
+    closed: "Closed",
+    completed: "Completed",
+    currentStatus: "Current Status",
+    pendingDesc: "Complaint received and queued for action.",
+    submittedDesc: "Complaint forwarded to the department.",
+    underReviewDesc: "Department is reviewing submitted details.",
+    completedDesc: "Complaint has been resolved and closed.",
+    officer: "Officer",
+    municipalityOfficer: "Municipality Officer",
+    tahsildar: "Tahsildar",
+    fieldInspector: "Field Inspector",
+    closedBy: "Closed by",
+    districtOfficer: "District Officer",
+  },
+  ta: {
+    pending: "நிலுவை",
+    submitted: "சமர்ப்பிக்கப்பட்டது",
+    underReview: "ஆய்வில்",
+    inProgress: "நடப்பில்",
+    closed: "மூடப்பட்டது",
+    completed: "நிறைவேற்றப்பட்டது",
+    currentStatus: "தற்போதைய நிலை",
+    pendingDesc: "புகார் பெறப்பட்டு நடவடிக்கைக்கு வைக்கப்பட்டது.",
+    submittedDesc: "புகார் துறைக்கு அனுப்பப்பட்டது.",
+    underReviewDesc: "துறை விவரங்களை ஆய்வு செய்து வருகிறது.",
+    completedDesc: "புகார் தீர்க்கப்பட்டு முடிக்கப்பட்டது.",
+    officer: "அதிகாரி",
+    municipalityOfficer: "நகராட்சி அதிகாரி",
+    tahsildar: "தாசில்தார்",
+    fieldInspector: "கள ஆய்வாளர்",
+    closedBy: "மூடியவர்",
+    districtOfficer: "மாவட்ட அதிகாரி",
+  },
+};
+
 export default function GrievanceStatus({ grievance }) {
-  const { t } = useLanguage();
+  const { language } = useLanguage();
+  const t = (key) => (language === "ta" ? TEXT.ta[key] : TEXT.en[key]) || key;
   if (!grievance) return null;
 
   const getStatusColor = (status) => {
