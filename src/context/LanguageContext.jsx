@@ -1,10 +1,17 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { translations } from "../translations";
 
 const LanguageContext = createContext();
 
 export function LanguageProvider({ children }) {
-  const [language, setLanguage] = useState("en");
+  const [language, setLanguage] = useState(() => {
+    try {
+      const savedLanguage = localStorage.getItem("tn_portal_language");
+      return savedLanguage === "ta" ? "ta" : "en";
+    } catch {
+      return "en";
+    }
+  });
 
   const toggleLanguage = () => {
     setLanguage((prev) => (prev === "en" ? "ta" : "en"));
@@ -36,8 +43,22 @@ export function LanguageProvider({ children }) {
     return language === "ta" ? decodeMojibakeTamil(value) : value;
   };
 
+useEffect(() => {
+    try {
+      localStorage.setItem("tn_portal_language", language);
+      document.documentElement.lang = language === "ta" ? "ta" : "en";
+    } catch {
+      // Ignore storage failures (private mode / restricted environment).
+    }
+  }, [language]);
+
+  const inputProps = {
+    lang: language === "ta" ? "ta" : "en",
+    spellCheck: language !== "ta",
+  };
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, toggleLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, toggleLanguage, t, inputProps }}>
       {children}
     </LanguageContext.Provider>
   );

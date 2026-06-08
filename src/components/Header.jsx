@@ -42,25 +42,21 @@ function Header() {
           </div>
 
           <div className="hidden items-center gap-6 lg:flex">
-            {navLinks.map((item) =>
-              item.to.includes('#') ? (
-                <a
-                  key={item.label}
-                  href={item.to}
-                  className="text-sm font-medium transition-colors hover:text-[#F4B400]"
-                >
-                  {item.label}
-                </a>
-              ) : (
+            {navLinks.map((item) => {
+              const linkTo = item.to.includes('#')
+                ? { pathname: '/', hash: item.to.slice(1) }
+                : item.to;
+
+              return (
                 <Link
                   key={item.label}
-                  to={item.to}
+                  to={linkTo}
                   className="text-sm font-medium transition-colors hover:text-[#F4B400]"
                 >
                   {item.label}
                 </Link>
-              )
-            )}
+              );
+            })}
             <button
               type="button"
               onClick={() => setLanguage((prev) => (prev === 'en' ? 'ta' : 'en'))}
@@ -82,17 +78,17 @@ function Header() {
 
         {mobileOpen && (
           <div className="space-y-2 pb-4 lg:hidden">
-            {navLinks.map((item) =>
-              item.to.includes('#') ? (
-                <a key={item.label} href={item.to} className="block rounded-md px-3 py-2 text-sm hover:bg-white/10">
-                  {item.label}
-                </a>
-              ) : (
-                <Link key={item.label} to={item.to} className="block rounded-md px-3 py-2 text-sm hover:bg-white/10">
+            {navLinks.map((item) => {
+              const linkTo = item.to.includes('#')
+                ? { pathname: '/', hash: item.to.slice(1) }
+                : item.to;
+
+              return (
+                <Link key={item.label} to={linkTo} className="block rounded-md px-3 py-2 text-sm hover:bg-white/10">
                   {item.label}
                 </Link>
-              )
-            )}
+              );
+            })}
             <button
               type="button"
               onClick={() => setLanguage((prev) => (prev === 'en' ? 'ta' : 'en'))}

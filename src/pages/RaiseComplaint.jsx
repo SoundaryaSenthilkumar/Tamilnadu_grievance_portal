@@ -1,7 +1,6 @@
 ﻿import { useEffect, useRef, useState } from "react";
 import { jsPDF } from "jspdf";
-// import Navbar from "../components/Navbar";
-// import Footer from "../components/Footer";
+import { submitComplaint as apiSubmitComplaint, getDepartments } from "../api";
 import { useLanguage } from "../context/LanguageContext";
 
 const departments = [
@@ -110,7 +109,7 @@ function revokePreviewUrl(url) {
 }
 
 export default function RaiseComplaint() {
-  const { language } = useLanguage();
+  const { language, inputProps } = useLanguage();
   const isTamil = language === "ta";
   const cameraInputRef = useRef(null);
   const liveVideoRef = useRef(null);
@@ -123,19 +122,9 @@ export default function RaiseComplaint() {
   const [capturedPreviewUrls, setCapturedPreviewUrls] = useState([]);
   const [fullscreenPreviewUrl, setFullscreenPreviewUrl] = useState("");
   const [currentUserPhone, setCurrentUserPhone] = useState(() => localStorage.getItem("currentUserPhone") ?? "");
-  const [complaints, setComplaints] = useState(() => {
-    const saved = localStorage.getItem("complaintRecords");
-    if (!saved) return [];
-
-    try {
-      const parsed = JSON.parse(saved);
-      const normalized = normalizeComplaintTokens(parsed);
-      localStorage.setItem("complaintRecords", JSON.stringify(normalized));
-      return normalized;
-    } catch {
-      return [];
-    }
-  });
+  const [complaints, setComplaints] = useState([]);
+  const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const ui = isTamil
     ? {
@@ -161,9 +150,9 @@ export default function RaiseComplaint() {
         submittedAt: "சமர்ப்பித்த தேதி/நேரம்",
         download: "பதிவிறக்கம்",
         cameraPreview: "கேமரா முன்னோட்டம்",
-        takePhoto: "புகைப்படம் எடு",
-        closeCamera: "கேமரா மூடு",
-        close: "மூடு",
+        takePhoto: "புகைப்படம்  எடுக்கவும்",
+        closeCamera: "கேமரா நிறுத்தவும்",
+        close: "வெளியேறுக",
         placeholderName: "உங்கள் பெயரை உள்ளிடவும்",
         placeholderAddress: "வீட்டு எண், தெரு",
         placeholderPincode: "அஞ்சல் குறியீட்டை உள்ளிடவும்",
@@ -181,7 +170,7 @@ export default function RaiseComplaint() {
         captureFailed: "புகைப்படம் எடுப்பதில் தோல்வி. மீண்டும் முயற்சிக்கவும்.",
         downloadComplaint: "புகாரை பதிவிறக்கவும்",
         viewFullscreen: "முழுத்திரையில் காண்க",
-        fileToken: "டோக்கன்",
+        fileToken: "குறைதீர்ப்பு எண்",
         fileName: "பெயர்",
         fileDepartment: "துறை",
         fileConstituency: "தொகுதி",
@@ -269,34 +258,66 @@ export default function RaiseComplaint() {
     return nextErrors;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     const nextErrors = validate();
     setErrors(nextErrors);
-
     if (Object.keys(nextErrors).length > 0) return;
 
-    const generatedToken = generateToken();
-    const complaintRecord = {
-      token: generatedToken,
-      ...formData,
-      submittedAt: new Date().toISOString(),
-    };
-
-    setComplaints((prev) => {
-      const updated = [...prev, complaintRecord];
-      localStorage.setItem("complaintRecords", JSON.stringify(updated));
-      return updated;
-    });
-
-    setCurrentUserPhone(formData.phone);
-    localStorage.setItem("currentUserPhone", formData.phone);
-    setToken(generatedToken);
-    localStorage.setItem("currentComplaintToken", generatedToken);
-    setShowSubmittedModal(true);
-    setFormData(initialState);
-    capturedPreviewUrls.forEach((url) => revokePreviewUrl(url));
-    setCapturedPreviewUrls([]);
+    setIsSubmitting(true);
+    setSubmitError("");
+    try {
+      const payload = {
+        citizen_name: formData.name,
+        phone: formData.phone,
+        department_id: formData.department,
+        constituency: formData.constituency,
+        address_line1: formData.addressLine1,
+        address_line2: formData.addressLine2,
+        message: formData.message,
+      };
+      const allFiles = [
+        ...formData.attachmentItems.map((item) => {
+          const arr = item.dataUrl.split(",");
+          const mime = arr[0].match(/:(.*?);/)[1];
+          const bstr = atob(arr[1]);
+          const u8arr = new Uint8Array(bstr.length);
+          for (let i = 0; i < bstr.length; i++) u8arr[i] = bstr.charCodeAt(i);
+          return new File([u8arr], item.name, { type: mime });
+        }),
+        ...formData.cameraMediaItems.map((item) => {
+          const arr = item.dataUrl.split(",");
+          const mime = arr[0].match(/:(.*?);/)[1];
+          const bstr = atob(arr[1]);
+          const u8arr = new Uint8Array(bstr.length);
+          for (let i = 0; i < bstr.length; i++) u8arr[i] = bstr.charCodeAt(i);
+          return new File([u8arr], item.name, { type: mime });
+        }),
+      ];
+      const result = await apiSubmitComplaint(payload, allFiles);
+      const complaintRecord = {
+        ...result,
+        token: result.token,
+        name: result.citizen_name,
+        department: result.department?.name || formData.department,
+        submittedAt: result.submitted_at,
+        attachmentItems: formData.attachmentItems,
+        cameraMediaItems: formData.cameraMediaItems,
+      };
+      setComplaints((prev) => [...prev, complaintRecord]);
+      setCurrentUserPhone(formData.phone);
+      localStorage.setItem("currentUserPhone", formData.phone);
+      setToken(result.token);
+      localStorage.setItem("currentComplaintToken", result.token);
+      setShowSubmittedModal(true);
+      setFormData(initialState);
+      capturedPreviewUrls.forEach((url) => revokePreviewUrl(url));
+      setCapturedPreviewUrls([]);
+    } catch (err) {
+      setSubmitError(err.message || "Submission failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const currentComplaint = token ? complaints.find((record) => record.token === token) ?? null : null;
@@ -756,6 +777,7 @@ export default function RaiseComplaint() {
                     value={formData.name}
                     onChange={handleChange}
                     placeholder={ui.placeholderName}
+                    {...inputProps}
                     className="rounded-lg border border-teal-200 px-3 py-2 text-sm outline-none transition focus:border-[#0f766e] focus:ring-2 focus:ring-teal-100"
                   />
                   {errors.name && <small className="text-xs font-medium text-red-700">{errors.name}</small>}
@@ -813,6 +835,7 @@ export default function RaiseComplaint() {
                     value={formData.addressLine1}
                     onChange={handleChange}
                     placeholder={ui.placeholderAddress}
+                    {...inputProps}
                     className="rounded-lg border border-teal-200 px-3 py-2 text-sm outline-none transition focus:border-[#0f766e] focus:ring-2 focus:ring-teal-100"
                   />
                   {errors.addressLine1 && <small className="text-xs font-medium text-red-700">{errors.addressLine1}</small>}
@@ -828,6 +851,7 @@ export default function RaiseComplaint() {
                     value={formData.addressLine2}
                     onChange={handleChange}
                     placeholder={ui.placeholderPincode}
+                    {...inputProps}
                     className="rounded-lg border border-teal-200 px-3 py-2 text-sm outline-none transition focus:border-[#0f766e] focus:ring-2 focus:ring-teal-100"
                   />
                 </div>
@@ -858,6 +882,7 @@ export default function RaiseComplaint() {
                     value={formData.message}
                     onChange={handleChange}
                     placeholder={ui.placeholderMessage}
+                    {...inputProps}
                     className="rounded-lg border border-teal-200 px-3 py-2 text-sm outline-none transition focus:border-[#0f766e] focus:ring-2 focus:ring-teal-100"
                   />
                   {errors.message && <small className="text-xs font-medium text-red-700">{errors.message}</small>}
@@ -969,10 +994,14 @@ export default function RaiseComplaint() {
 
               <button
                 type="submit"
-                className="mt-5 w-full rounded-lg bg-teal-800 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#0f766e]"
+                disabled={isSubmitting}
+                className="mt-5 w-full rounded-lg bg-teal-800 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#0f766e] disabled:opacity-60"
               >
-                {ui.submitComplaint}
+                {isSubmitting ? "Submitting..." : ui.submitComplaint}
               </button>
+              {submitError && (
+                <p className="mt-2 text-sm text-red-600 text-center">{submitError}</p>
+              )}
             </form>
 
           </div>

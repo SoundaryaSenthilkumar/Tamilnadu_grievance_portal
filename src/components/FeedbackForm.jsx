@@ -1,31 +1,34 @@
 import { useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
+import { submitFeedback } from "../api";
 
-export default function FeedbackForm({ grievance }) {
+export default function FeedbackForm({ grievance, onSubmitFeedback }) {
   const { t } = useLanguage();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   if (!grievance || grievance.status !== "Closed") return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const feedback = {
-      grievanceId: grievance.id,
-      rating,
-      comment,
-    };
-
-    console.log("Feedback submitted:", feedback);
-    setSubmitted(true);
-    
-    setTimeout(() => {
-      setSubmitted(false);
-      setRating(0);
-      setComment("");
-    }, 3000);
+    setError("");
+    setLoading(true);
+    try {
+      await submitFeedback(grievance.id, rating, comment);
+      setSubmitted(true);
+      setTimeout(() => {
+        setSubmitted(false);
+        setRating(0);
+        setComment("");
+      }, 3000);
+    } catch (err) {
+      setError(err.message || "Failed to submit feedback");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -50,6 +53,12 @@ export default function FeedbackForm({ grievance }) {
         </div>
       )}
 
+      {error && (
+        <div className="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+          {error}
+        </div>
+      )}
+
       <div className="space-y-4">
         <div>
           <label className="text-xs text-gray-500 uppercase tracking-wide mb-3 block">{t('rateExperience')}</label>
@@ -60,7 +69,6 @@ export default function FeedbackForm({ grievance }) {
                 type="button"
                 onClick={() => setRating(star)}
                 className="text-3xl transition-all duration-200 hover:scale-110"
-                aria-label={`Rate ${star} star`}
               >
                 <span className={rating >= star ? "text-yellow-400" : "text-gray-300"}>
                   {rating >= star ? "★" : "☆"}
@@ -90,13 +98,13 @@ export default function FeedbackForm({ grievance }) {
         </div>
       </div>
 
-      <button 
+      <button
         type="submit"
-        disabled={rating === 0 || !comment.trim()}
+        disabled={rating === 0 || !comment.trim() || loading}
         className="bg-[#0f766e] hover:bg-[#0d5f58] text-white px-6 py-2 rounded-lg transition duration-300 mt-4 w-full disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         <i className="fa-solid fa-paper-plane"></i>
-        {t('submitFeedback')}
+        {loading ? "Submitting..." : t('submitFeedback')}
       </button>
     </form>
   );

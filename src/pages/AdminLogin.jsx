@@ -1,39 +1,28 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
-
-const ta = {
-  title: "நிர்வாகி உள்நுழைவு",
-  subtitle: "தமிழ்நாடு குறைதீர் தளம்",
-  username: "பயனர்பெயர்",
-  password: "கடவுச்சொல்",
-  enterUsername: "பயனர்பெயரை உள்ளிடவும்",
-  enterPassword: "கடவுச்சொல்லை உள்ளிடவும்",
-  login: "உள்நுழைவு",
-  forgotPassword: "கடவுச்சொல் மறந்துவிட்டதா?",
-  alert: "நிர்வாகி உள்நுழைவு அம்சம் பின்னணி இணைப்புடன் செயல்படுத்தப்படும்.",
-};
-
-const en = {
-  title: "Admin Login",
-  subtitle: "Tamil Nadu Grievance Portal",
-  username: "Username",
-  password: "Password",
-  enterUsername: "Enter username",
-  enterPassword: "Enter password",
-  login: "Login",
-  forgotPassword: "Forgot Password?",
-  alert: "Admin login functionality will be implemented with backend",
-};
+import { adminLogin } from "../api";
 
 const AdminLogin = () => {
-  const { language } = useLanguage();
-  const isTamil = language === "ta";
-  const copy = isTamil ? ta : en;
+  const { t } = useLanguage();
+  const navigate = useNavigate();
   const [credentials, setCredentials] = useState({ username: "", password: "" });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert(copy.alert);
+    setError("");
+    setLoading(true);
+    try {
+      await adminLogin(credentials.username, credentials.password);
+      sessionStorage.setItem("tn_admin_authenticated", "1");
+      navigate("/admin/dashboard");
+    } catch (err) {
+      setError(err.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -46,44 +35,48 @@ const AdminLogin = () => {
               <circle cx="12" cy="8" r="4" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-[#0F766E]">{copy.title}</h1>
-          <p className="mt-2 text-sm text-teal-700">{copy.subtitle}</p>
+          <h1 className="text-3xl font-bold text-[#0F766E]">{t("adminLoginTitle")}</h1>
+          <p className="mt-2 text-sm text-teal-700">{t("adminLoginSubtitle")}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="mb-2 block font-semibold text-teal-800">{copy.username}</label>
+            <label className="mb-2 block font-semibold text-teal-800">{t("adminUsername")}</label>
             <input
               type="text"
               required
               onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
               className="w-full rounded-lg border border-teal-200 px-4 py-3 outline-none transition focus:border-[#0F766E] focus:ring-2 focus:ring-teal-100"
-              placeholder={copy.enterUsername}
+              placeholder={t("adminEnterUsername")}
             />
           </div>
 
           <div>
-            <label className="mb-2 block font-semibold text-teal-800">{copy.password}</label>
+            <label className="mb-2 block font-semibold text-teal-800">{t("adminPassword")}</label>
             <input
               type="password"
               required
               onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
               className="w-full rounded-lg border border-teal-200 px-4 py-3 outline-none transition focus:border-[#0F766E] focus:ring-2 focus:ring-teal-100"
-              placeholder={copy.enterPassword}
+              placeholder={t("adminEnterPassword")}
             />
           </div>
 
+          {error && (
+            <p className="text-sm text-red-600 text-center">{error}</p>
+          )}
           <button
             type="submit"
-            className="w-full rounded-lg bg-[#0F766E] py-3 text-lg font-bold text-white transition hover:bg-teal-800"
+            disabled={loading}
+            className="w-full rounded-lg bg-[#0F766E] py-3 text-lg font-bold text-white transition hover:bg-teal-800 disabled:opacity-60"
           >
-            {copy.login}
+            {loading ? "Logging in..." : t("adminLoginButton")}
           </button>
         </form>
 
         <div className="mt-6 text-center">
           <a href="#" className="text-sm font-medium text-[#0F766E] hover:text-teal-800">
-            {copy.forgotPassword}
+            {t("adminForgotPassword")}
           </a>
         </div>
       </div>

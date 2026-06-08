@@ -4,27 +4,17 @@ import { useLanguage } from "../context/LanguageContext";
 const TEXT = {
   en: {
     errorComplete: "Please enter all 10 characters.",
-    trackTitle: "Track Your Complaint",
-    trackDescription: "Enter your grievance ID to view current status.",
+    trackTitle: "Track Your Grievance",
+    trackDescription: "Enter your Grievance Token to view the current status of your complaint.",
     search: "Search",
-    demoIds: "Demo IDs",
-    pending: "Pending",
-    submitted: "Submitted",
-    underReview: "Under Review",
-    inProgress: "In Progress",
-    closed: "Closed",
+    tokenHint: "Token format: 5 letters + 5 digits (e.g. ABCDE12345)",
   },
   ta: {
     errorComplete: "10 எழுத்துகள் முழுவதும் உள்ளிடவும்.",
-    trackTitle: "உங்கள் புகாரை கண்காணிக்கவும்",
-    trackDescription: "நிலையை பார்க்க உங்கள் புகார் ID-ஐ உள்ளிடவும்.",
+    trackTitle: "உங்கள் குறையைக் கண்காணிக்கவும்",
+    trackDescription: "உங்கள் புகாரின் தற்போதைய நிலையைப் பார்க்க டோக்கனை உள்ளிடவும்.",
     search: "தேடு",
-    demoIds: "மாதிரி IDகள்",
-    pending: "நிலுவை",
-    submitted: "சமர்ப்பிக்கப்பட்டது",
-    underReview: "ஆய்வில்",
-    inProgress: "நடப்பில்",
-    closed: "மூடப்பட்டது",
+    tokenHint: "டோக்கன் வடிவம்: 5 எழுத்துகள் + 5 இலக்கங்கள்",
   },
 };
 
@@ -34,69 +24,52 @@ export default function StatusTracker({ onSearch }) {
   const [grievanceId, setGrievanceId] = useState("");
   const [error, setError] = useState("");
 
-  const formatGrievanceId = (value) => {
-    // Only allow a-z and 0-9 characters, convert to uppercase
-    const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    
-    // Limit to 10 characters
-    return cleaned.slice(0, 10);
-  };
+  const formatToken = (value) =>
+    value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
 
   const handleChange = (e) => {
-    const formatted = formatGrievanceId(e.target.value);
-    setGrievanceId(formatted);
+    setGrievanceId(formatToken(e.target.value));
     setError("");
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
     if (grievanceId.length === 10) {
       setError("");
       onSearch(grievanceId);
     } else {
-      setError(t('errorComplete'));
+      setError(t("errorComplete"));
     }
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-xl border border-[#0f766e] p-4 sm:p-6 mt-10" style={{ marginBottom: '70px' }}>
+    <div className="bg-white shadow-lg rounded-xl border border-[#0f766e] p-4 sm:p-6 mt-10" style={{ marginBottom: "70px" }}>
+      <div className="text-center mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-primary mb-2">{t("trackTitle")}</h1>
+        <p className="text-gray-600">{t("trackDescription")}</p>
+      </div>
+
       <form onSubmit={handleSubmit} className="flex gap-3">
-        
         <div className="flex-1">
           <input
             type="text"
-            placeholder="A7K3D9P2X4"
-            className={`w-full border ${error ? 'border-red-500' : 'border-gray-300'} px-4 py-2 rounded-lg focus:outline-none focus:ring-2 ${error ? 'focus:ring-red-500' : 'focus:ring-[#0f766e]'} font-mono uppercase`}
+            placeholder="ABCDE12345"
+            className={`w-full border ${error ? "border-red-500" : "border-gray-300"} px-4 py-2 rounded-lg focus:outline-none focus:ring-2 ${error ? "focus:ring-red-500" : "focus:ring-[#0f766e]"} font-mono uppercase`}
             value={grievanceId}
             onChange={handleChange}
             maxLength={10}
           />
-          {error && (
-            <p className="text-red-500 text-sm mt-1">{error}</p>
-          )}
+          {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+          <p className="text-xs text-gray-400 mt-1">{t("tokenHint")}</p>
         </div>
 
-        <button 
+        <button
           type="submit"
           className="bg-[#0f766e] text-white px-6 py-2 rounded-lg transition duration-300 hover:bg-white hover:text-[#0f766e] hover:border hover:border-[#0f766e] active:scale-95"
         >
-          {t('search')}
+          {t("search")}
         </button>
-
       </form>
-
-      <div className="mt-4">
-        <p className="text-xs text-slate-500 font-medium mb-2">{t('demoIds')}</p>
-        <div className="flex flex-wrap gap-2">
-          <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-mono whitespace-nowrap">A7K3D9P2X4 ({t('pending')})</span>
-          <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-mono whitespace-nowrap">B8M1Q4T6Z9 ({t('submitted')})</span>
-          <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-mono whitespace-nowrap">C5R8V2N7Y1 ({t('underReview')})</span>
-          <span className="bg-teal-100 text-teal-700 px-2 py-1 rounded text-xs font-mono whitespace-nowrap">D9X3K6P1W8 ({t('inProgress')})</span>
-          <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-mono whitespace-nowrap">E2Z7M4S9T5 ({t('closed')})</span>
-        </div>
-      </div>
-
     </div>
   );
 }

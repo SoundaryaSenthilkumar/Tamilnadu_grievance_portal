@@ -3,41 +3,50 @@ import StatusTracker from "../components/StatusTracker";
 import CitizenProfile from "../components/CitizenProfile";
 import GrievanceStatus from "../components/GrievanceStatus";
 import FeedbackForm from "../components/FeedbackForm";
-
-const STATUS_MAP = {
-  A7K3D9P2X4: "Pending",
-  B8M1Q4T6Z9: "Submitted",
-  C5R8V2N7Y1: "Under Review",
-  D9X3K6P1W8: "In Progress",
-  E2Z7M4S9T5: "Closed",
-};
+import { trackComplaint, submitFeedback } from "../api";
 
 export default function TrackComplaint() {
   const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const searchGrievance = (id) => {
-    const status = STATUS_MAP[id] || "Closed";
-    setData({
-      profile: {
-        name: "Arun Kumar",
-        email: "arun@email.com",
-        district: "Chennai",
-        address: "Anna Nagar",
-        phone: "9876543210",
-        pincode: "600040",
-      },
-      grievance: {
-        id,
-        department: "Revenue Department",
-        status,
-        remarks: status === "Closed" ? "Streetlight repaired" : "Under processing",
-        subject: "Delay in land patta transfer",
-        description:
-          "Applied for patta transfer 6 months ago. No update received despite multiple visits to the Taluk office.",
-        proofUrl:
-          "https://via.placeholder.com/600x400/0f766e/ffffff?text=Proof+Document",
-      },
-    });
+  const searchGrievance = async (token) => {
+    setError("");
+    setLoading(true);
+    try {
+      const result = await trackComplaint(token);
+      setData({
+        profile: {
+          name: result.citizen_name,
+          phone: result.phone,
+          district: result.constituency || "",
+          address: result.address_line1,
+          pincode: result.address_line2 || "",
+        },
+        grievance: {
+          id: result.token,
+          department: result.department?.name || "",
+          status: result.status,
+          remarks: result.notes || "",
+          subject: result.message?.substring(0, 60) || "",
+          description: result.message,
+          timeline: result.timeline?.map((t) => ({
+            status: t.status,
+            date: t.changed_at?.split("T")[0] || "",
+            completed: true,
+          })) || [],
+        },
+      });
+    } catch (err) {
+      setError(err.message || "Complaint not found");
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFeedback = async (token, rating, comment) => {
+    await submitFeedback(token, rating, comment);
   };
 
   return (
@@ -45,11 +54,19 @@ export default function TrackComplaint() {
       <div className="max-w-4xl mx-auto px-4">
         <StatusTracker onSearch={searchGrievance} />
 
+        {loading && (
+          <p className="text-center text-teal-700 mt-6">Searching...</p>
+        )}
+
+        {error && (
+          <p className="text-center text-red-600 mt-6">{error}</p>
+        )}
+
         {data && (
           <>
             <CitizenProfile profile={data.profile} grievance={data.grievance} />
             <GrievanceStatus grievance={data.grievance} />
-            <FeedbackForm grievance={data.grievance} />
+            <FeedbackForm grievance={data.grievance} onSubmitFeedback={handleFeedback} />
           </>
         )}
       </div>
