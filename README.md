@@ -1,6 +1,6 @@
 # TN Grievance Portal
 
-Frontend web app for a Tamil Nadu public grievance system.
+Full stack web app for a Tamil Nadu public grievance system.
 
 ## Overview
 
